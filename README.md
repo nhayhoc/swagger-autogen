@@ -3,7 +3,114 @@
 fork: https://github.com/davibaltar/swagger-autogen
 ## Add future: 
 Auto schema response 400 bad request from validatorjs rule
+Definitions js file in folder component
+```sh
+src
+_swagger.js
+_items
+____router.js
+____controller.js
+____definitions.js
+____validateRules.js 
+```
+## Use
 
+### Example 
+#### Git: [Example project git](https://github.com/nhayhoc/example-swagger-autogen-validator).
+
+#### Live example: [https://auto-swagger-validator-example.herokuapp.com/doc](https://auto-swagger-validator-example.herokuapp.com/doc).
+
+
+#### Code change
+
+```js
+
+const swaggerAutogen = require('swagger-autogen')();
+// ==>
+const swaggerAutogen = require('swagger-autogen-validator')();
+```
+
+```js
+swaggerAutogen(outputFile, endpointsFiles, doc);
+// ==>
+swaggerAutogen({outputFile, endpointsFiles, doc});
+```
+
+```js
+// if need change path `definitions.js` or `validateRules.js`
+swaggerAutogen({
+    ...,
+    definitionFilePattern: 'src/**/definitions.js',
+    validateRulesFilePattern: 'src/**/validateRules.js'
+});
+```
+```js
+// definitions.js
+
+exports.UserGetAll = {
+  pages: 10,
+  page: 1,
+  docs: [
+    {
+      id: 1,
+      name: "name1",
+      description: "name1 description",
+    },
+  ],
+};
+exports.UserNewuser = {
+  name: "remote control",
+  description: "lorem remote control description",
+};
+```
+
+```js
+// validateRules.js
+exports.getAll = {
+  page: "numeric|max:1000",
+  limit: "numeric|max:100",
+};
+exports.addNew = {
+  name: "required|string|max:100",
+  description: "required|string|max:1000",
+};
+```
+
+```js
+// controller.js
+
+const validateRules = require("./validateRules");
+const Validator = require("validatorjs");
+exports.getAll = (req, res, next) => {
+  let { page, limit } = req.query;
+  let validation = new Validator({ page, limit }, validateRules.getAll);
+  if (validation.fails())
+    return res.status(400).json({ error: validation.errors.all() });
+  //
+  //   let data = ....
+  /* #swagger.responses[200] = {
+    schema: { $ref: '#/definitions/UserGetAll' }
+  } */
+  res.json(data);
+};
+exports.addNew = (req, res, next) => {
+  let { name, description } = req.body;
+  /* #swagger.parameters['obj']  = {
+    in: 'body',
+    schema: { $ref: '#/definitions/UserNewuser' }
+  } */
+
+  let validation = new Validator({ name, description }, validateRules.addNew);
+  if (validation.fails())
+    return res.status(400).json({ error: validation.errors.all() });
+  //
+  //   let data = ....
+
+  res.json(data);
+};
+
+```
+## Future
 This module performs the automatic construction of the Swagger documentation. The module can identify the endpoints and automatically capture methods such as to get, post, put, and so on. The module can also identify the paths, routes, middlewares, response status code, parameters in the path, header, query and body. It is possible to add information such as endpoint description, parameter description, definitions, security, among others. It is also possible to ignore or disable the automatic capture of an endpoint (in the latter case, having to manually add each information). The module generates the *.json* file with the documentation in the swagger format.
 
 [![NPM Version](http://img.shields.io/npm/v/swagger-autogen.svg?style=flat)](https://www.npmjs.com/package/swagger-autogen)
@@ -11,49 +118,61 @@ This module performs the automatic construction of the Swagger documentation. Th
 
 ## Contents
 
-- [Installation](#installation)
-- [Update](#update)
-- [Usage](#usage)
-  - [Usage (Basic)](#usage-basic)
-  - [Usage (With Optionals)](#usage-with-optionals)
-- [Building documentation without starting the project](#building-documentation-without-starting-the-project)
-- [Building documentation at project startup](#building-documentation-at-project-startup)
-- [Options](#options)
-- [Endpoints](#endpoints)
-  - [Automatic capture](#automatic-capture)
-  - [Tags](#tags)
-  - [Summary](#summary)
-  - [Description](#description)
-  - [Operation ID](#operation-id)
-  - [Parameters](#parameters)
-  - [Responses](#responses)
-  - [Schema and Definitions](#schema-and-definitions)
+- [swagger-autogen](#swagger-autogen)
+  - [Add future:](#add-future)
+  - [Use](#use)
+    - [Example](#example)
+      - [Git: Example project git.](#git-example-project-git)
+      - [Live example: https://auto-swagger-validator-example.herokuapp.com/doc.](#live-example-httpsauto-swagger-validator-exampleherokuappcomdoc)
+      - [Code change](#code-change)
+  - [Future](#future)
+  - [Contents](#contents)
+  - [Installation](#installation)
+  - [Update](#update)
+  - [Usage](#usage)
+    - [Usage (Basic)](#usage-basic)
+    - [Usage (With optionals)](#usage-with-optionals)
+  - [Building documentation without starting the project](#building-documentation-without-starting-the-project)
+  - [Building documentation at project startup](#building-documentation-at-project-startup)
+  - [Options](#options)
+  - [Endpoints](#endpoints)
+    - [Automatic capture](#automatic-capture)
+    - [Tags](#tags)
+    - [Summary](#summary)
+    - [Description](#description)
+    - [Operation ID](#operation-id)
+    - [Parameters](#parameters)
+      - [Body](#body)
+    - [Responses](#responses)
+    - [Schema and Definitions](#schema-and-definitions)
+      - [Adding examples (only OpenAPI 3.x)](#adding-examples-only-openapi-3x)
+      - [@schema](#schema)
       - [Examples of Definitions](#examples-of-definitions)
-  - [Endpoint as deprecated](#endpoint-as-deprecated)
-  - [Ignoring endpoint](#ignoring-endpoint)
-  - [Properties Inheritance](#properties-inheritance)
-  - [Manual capture](#manual-capture)
-  - [Forced endpoint creation](#forced-endpoint-creation)
+    - [Endpoint as deprecated](#endpoint-as-deprecated)
+    - [Ignoring endpoint](#ignoring-endpoint)
+    - [Properties Inheritance](#properties-inheritance)
+    - [Manual capture](#manual-capture)
+    - [Forced Endpoint Creation](#forced-endpoint-creation)
   - [Swagger 2.0](#swagger-20)
     - [Consumes and Produces](#consumes-and-produces)
-    - [Security](#security)
-      - [API Keys (Token) example](#api-keys-token-example)
-      - [OAuth2 example](#oauth2-example)
+  - [Security](#security)
+    - [API Keys (Token) example](#api-keys-token-example)
+    - [OAuth2 example](#oauth2-example)
   - [OpenAPI 3.x](#openapi-3x)
     - [Request Body](#request-body)
     - [Responses](#responses-1)
-    - [Security](#security-1)
-      - [Bearer Auth example](#bearer-auth-example)
-      - [OAuth2 example](#oauth2-example-1)
+  - [Security](#security-1)
+    - [Bearer Auth example](#bearer-auth-example)
+    - [OAuth2 example](#oauth2-example-1)
     - [oneOf and anyOf](#oneof-and-anyof)
     - [Enums](#enums)
-- [Response Language](#response-language)
-- [Examples](#examples)
-- [Compatibility](#compatibility)
-- [Tutorials](#tutorials)
-- [Changelog](#changelog)
-- [Help us!](#help-us)
-- [License](#license)
+  - [Response Language](#response-language)
+    - [Examples](#examples)
+  - [Compatibility](#compatibility)
+  - [Tutorials](#tutorials)
+  - [Changelog](#changelog)
+  - [Help us!](#help-us)
+  - [License](#license)
 
 ## Installation
 
