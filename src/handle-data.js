@@ -918,7 +918,6 @@ async function getStatus(elem, response, objResponses, filePath = '') {
                         }
                         if (status == 400) {
                             let rule = /validateRules\.([a-zA-Z0-9_]+)/gm.exec(elem);
-                            console.log({ elem, status, filePath, rule })
                             objResponses[status].description += "|"
                             objResponses[status].description += filePath
                             objResponses[status].description += "|";
