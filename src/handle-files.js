@@ -1257,7 +1257,7 @@ function readEndpointFile(filePath, pathRoute = '', relativePath, receivedRouteM
                                 }
 
                                 if (res) {
-                                    objResponses = await handleData.getStatus(endpoint, res, objResponses); // Search for response status
+                                    objResponses = await handleData.getStatus(endpoint, res, objResponses, reference.filePath); // Search for response status
                                     if (globalOptions.autoResponse) {
                                         //     objResponses = await handleData.getResponses(rawEndpoint, res, objResponses);
                                     }

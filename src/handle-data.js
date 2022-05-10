@@ -867,7 +867,7 @@ function getQueryIndirectly(elem, request, objParameters) {
  * @param {array} response array containing variables of response.
  * @param {object} objResponses
  */
-async function getStatus(elem, response, objResponses) {
+async function getStatus(elem, response, objResponses, filePath = '') {
     const origObjResponses = objResponses;
     try {
         elem = elem.replaceAll(new RegExp(`\\s*\\.\\s*json\\s*\\(\\s*`), `.json( `);
@@ -915,6 +915,16 @@ async function getStatus(elem, response, objResponses) {
                                 description: tables.getHttpStatusDescription(status, swaggerTags.getLanguage()) || '',
                                 ...objResponses[status]
                             };
+                        }
+                        if (status == 400) {
+                            let rule = /validateRules\.([a-zA-Z0-9_]+)/gm.exec(elem);
+                            console.log({ elem, status, filePath, rule })
+                            objResponses[status].description += "|"
+                            objResponses[status].description += filePath
+                            objResponses[status].description += "|";
+                            if (rule && rule.length >= 2) {
+                                objResponses[status].description += rule[1]
+                            }
                         }
                     });
             }
