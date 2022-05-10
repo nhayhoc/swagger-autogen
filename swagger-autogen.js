@@ -1,16 +1,20 @@
 require('./src/prototype-functions');
 const fs = require('fs');
+const path = require('path');
+const glob = require('glob-promise');
+
 const swaggerTags = require('./src/swagger-tags');
 const handleFiles = require('./src/handle-files');
 const statics = require('./src/statics');
 const utils = require('./src/utils');
 const handleData = require('./src/handle-data');
+const HashName = require('./src/hashName');
+const validateRuleToDefinition = require('./src/validateRuleToDefinition');
 
 const { platform } = process;
 const symbols = platform === 'win32' ? { success: '', failed: '' } : { success: '✔', failed: '✖' };
 
-
-module.exports = function (args) {
+function swaggerAutogen(args) {
     let options = { language: null, disableLogs: false, disableWarnings: false, openapi: null, autoHeaders: true, autoQuery: true, autoBody: true, autoResponse: true };
     let recLang = null;
     if (args && typeof args === 'string') {
@@ -20,7 +24,7 @@ module.exports = function (args) {
         options = { ...options, ...args };
     }
 
-    // REFACTOR: 
+    // REFACTOR:
     options.language = recLang || options.language || 'en-US';
     handleFiles.setOptions(options);
     handleData.setOptions(options);
@@ -40,10 +44,10 @@ module.exports = function (args) {
                 let file = endpointsFiles[idx];
 
                 if (file.includes('*')) {
-                    const patternPath = await utils.resolvePatternPath(file)
+                    const patternPath = await utils.resolvePatternPath(file);
                     if (patternPath) {
                         for (let idxFile = 0; idxFile < patternPath.length; ++idxFile) {
-                            let file = patternPath[idxFile]
+                            let file = patternPath[idxFile];
                             let extension = await utils.getExtension(file);
 
                             if (!fs.existsSync(file + extension)) {
@@ -54,7 +58,6 @@ module.exports = function (args) {
                         }
                         allFiles = [...allFiles, ...patternPath];
                     }
-
                 } else {
                     let extension = await utils.getExtension(file);
                     allFiles = [...allFiles, file + extension];
@@ -145,33 +148,31 @@ module.exports = function (args) {
                 if (!objDoc.servers || objDoc.servers.length == 0) {
                     if (objDoc.host) {
                         if (objDoc.basePath) {
-                            objDoc.host += objDoc.basePath
+                            objDoc.host += objDoc.basePath;
                         }
                         if (objDoc.host.slice(0, 4).toLowerCase() != 'http') {
                             if (objDoc.schemes && objDoc.schemes.length > 0) {
                                 objDoc.schemes.forEach(scheme => {
-                                    objDoc.servers.push(
-                                        {
-                                            url: scheme + '://' + objDoc.host
-                                        }
-                                    )
-                                })
+                                    objDoc.servers.push({
+                                        url: scheme + '://' + objDoc.host
+                                    });
+                                });
                             } else {
-                                objDoc.host = 'http://' + objDoc.host
+                                objDoc.host = 'http://' + objDoc.host;
                                 objDoc.servers = [
                                     {
                                         url: objDoc.host
                                     }
-                                ]
+                                ];
                             }
                         }
 
-                        delete objDoc.host
+                        delete objDoc.host;
                     } else {
-                        delete objDoc.servers
+                        delete objDoc.servers;
                     }
                 } else {
-                    delete objDoc.host
+                    delete objDoc.host;
                 }
 
                 if (objDoc.components && objDoc.components.schemas) {
@@ -198,61 +199,61 @@ module.exports = function (args) {
                 if (objDoc.components && objDoc.components.examples) {
                     Object.keys(objDoc.components.examples).forEach(example => {
                         if (!objDoc.components.examples[example].value) {
-                            let auxExample = { ...objDoc.components.examples[example] }
-                            delete objDoc.components.examples[example]
+                            let auxExample = { ...objDoc.components.examples[example] };
+                            delete objDoc.components.examples[example];
                             objDoc.components.examples[example] = {
                                 value: auxExample
-                            }
+                            };
                         }
                     });
                 }
 
                 if (objDoc.definitions && Object.keys(objDoc.definitions).length > 0) {
                     if (!objDoc.components) {
-                        objDoc.components = {}
+                        objDoc.components = {};
                     }
                     if (!objDoc.components.schemas) {
-                        objDoc.components.schemas = {}
+                        objDoc.components.schemas = {};
                     }
 
                     objDoc.components.schemas = {
                         ...objDoc.components.schemas,
                         ...objDoc.definitions
-                    }
+                    };
 
-                    delete objDoc.definitions
+                    delete objDoc.definitions;
                 }
 
                 if (objDoc.securityDefinitions && Object.keys(objDoc.securityDefinitions).length > 0) {
                     if (!objDoc.components) {
-                        objDoc.components = {}
+                        objDoc.components = {};
                     }
                     if (!objDoc.components.securitySchemes) {
-                        objDoc.components.securitySchemes = {}
+                        objDoc.components.securitySchemes = {};
                     }
 
                     objDoc.components.securitySchemes = {
                         ...objDoc.components.securitySchemes,
                         ...objDoc.securityDefinitions
-                    }
+                    };
 
-                    delete objDoc.securityDefinitions
+                    delete objDoc.securityDefinitions;
                 }
 
                 if (objDoc.basePath) {
-                    delete objDoc.basePath
+                    delete objDoc.basePath;
                 }
                 if (objDoc.schemes) {
-                    delete objDoc.schemes
+                    delete objDoc.schemes;
                 }
                 if (objDoc.consumes) {
-                    delete objDoc.consumes
+                    delete objDoc.consumes;
                 }
                 if (objDoc.produces) {
-                    delete objDoc.produces
+                    delete objDoc.produces;
                 }
                 if (objDoc.definitions) {
-                    delete objDoc.definitions
+                    delete objDoc.definitions;
                 }
             }
 
@@ -265,21 +266,21 @@ module.exports = function (args) {
             if (objDoc.servers && Object.keys(objDoc.servers).length == 0) {
                 delete objDoc.servers;
             }
-            if(objDoc.tags && objDoc.tags.length == 0){
+            if (objDoc.tags && objDoc.tags.length == 0) {
                 delete objDoc.tags;
             }
-            if(objDoc.consumes && objDoc.consumes.length == 0){
+            if (objDoc.consumes && objDoc.consumes.length == 0) {
                 delete objDoc.consumes;
             }
-            if(objDoc.produces && objDoc.produces.length == 0){
+            if (objDoc.produces && objDoc.produces.length == 0) {
                 delete objDoc.produces;
             }
-            if(objDoc.definitions && Object.keys(objDoc.definitions).length == 0){
+            if (objDoc.definitions && Object.keys(objDoc.definitions).length == 0) {
                 delete objDoc.definitions;
             }
 
-            let dataJSON = JSON.stringify(objDoc, null, 2);
-            fs.writeFileSync(outputFile, dataJSON);
+            // let dataJSON = JSON.stringify(objDoc, null, 2);
+            // fs.writeFileSync(outputFile, dataJSON);
             if (!options.disableLogs) {
                 console.log('Swagger-autogen:', '\x1b[32m', 'Success ' + symbols.success, '\x1b[0m');
             }
@@ -291,4 +292,67 @@ module.exports = function (args) {
             return { success: false, data: null };
         }
     };
-};
+}
+async function getAllDefinitions(definitionFilePattern, validateRulesFilePattern) {
+    if (!definitionFilePattern) definitionFilePattern = 'src/**/definitions.js';
+    if (!validateRulesFilePattern) validateRulesFilePattern = 'src/**/validateRules.js';
+    // all Definitions from all definitions.js
+    let allDefinitions = {};
+    let definitionFiles = await glob(definitionFilePattern);
+    definitionFiles.forEach(definitionFile => {
+        let definition = require(path.resolve(definitionFile));
+        allDefinitions = { ...allDefinitions, ...definition };
+    });
+
+    // Definitions 400 bad request
+    let validateRulesFiles = await glob(validateRulesFilePattern);
+    validateRulesFiles.forEach(validateRulesFile => {
+        let definitionValidateRules = require(path.resolve(validateRulesFile));
+        Object.keys(definitionValidateRules).forEach(nameRule => {
+            let name = HashName({ name: nameRule + '400', path: validateRulesFile });
+            allDefinitions = {
+                ...allDefinitions,
+                [name]: validateRuleToDefinition(definitionValidateRules[nameRule])
+            };
+        });
+    });
+    return allDefinitions;
+}
+
+async function Swagger_Pattern_File_Autogen({ definitionFilePattern, validateRulesFilePattern, outputFile, endpointsFiles, doc }) {
+    let allDefinitions = await getAllDefinitions(definitionFilePattern, validateRulesFilePattern);
+    if (!doc.hasOwnProperty('definitions')) doc['definitions'] = {};
+    doc.definitions = { ...doc.definition, ...allDefinitions };
+
+    const { data: swaggerData } = await swaggerAutogen()(outputFile, endpointsFiles, doc);
+
+    // rewrite 400 bad request from validator to swagger
+    let paths = Object.keys(swaggerData.paths);
+    paths.forEach(path => {
+        let pathSwagger = swaggerData.paths[path];
+        Object.keys(pathSwagger).forEach(method => {
+            let methodSwagger = pathSwagger[method];
+            if (methodSwagger.responses && methodSwagger.responses['400']) {
+                let descriptionSplit = methodSwagger.responses[400].description.split('|');
+                if (descriptionSplit.length === 3) {
+                    let [description, filePath, ruleName] = descriptionSplit;
+                    let ruleFilePath = filePath.split('/');
+
+                    ruleFilePath[ruleFilePath.length - 1] = 'validateRules.js';
+                    filePath = ruleFilePath.join('/');
+
+                    let name = HashName({ name: ruleName + '400', path: filePath });
+                    swaggerData.paths[path][method]['responses']['400'] = {
+                        schema: { $ref: `#/definitions/${name}` },
+                        description
+                    };
+                }
+            }
+        });
+    });
+    fs.writeFileSync(outputFile, JSON.stringify(swaggerData, null, 2), {
+        encoding: 'utf-8'
+    });
+    return swaggerData;
+}
+module.exports = () => Swagger_Pattern_File_Autogen;
