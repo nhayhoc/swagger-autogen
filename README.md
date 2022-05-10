@@ -1,5 +1,9 @@
 # swagger-autogen
 
+fork: https://github.com/davibaltar/swagger-autogen
+## Add future: 
+Auto schema response 400 bad request from validatorjs rule
+
 This module performs the automatic construction of the Swagger documentation. The module can identify the endpoints and automatically capture methods such as to get, post, put, and so on. The module can also identify the paths, routes, middlewares, response status code, parameters in the path, header, query and body. It is possible to add information such as endpoint description, parameter description, definitions, security, among others. It is also possible to ignore or disable the automatic capture of an endpoint (in the latter case, having to manually add each information). The module generates the *.json* file with the documentation in the swagger format.
 
 [![NPM Version](http://img.shields.io/npm/v/swagger-autogen.svg?style=flat)](https://www.npmjs.com/package/swagger-autogen)

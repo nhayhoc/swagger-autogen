@@ -27,13 +27,13 @@
         "openapi"
     ],
     "author": {
-        "name": "Davi D. Baltar",
-        "email": "davibaltar.npm@gmail.com"
+        "name": "DucMaster",
+        "email": "nhayhoc@gmail.com"
     },
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/davibaltar/swagger-autogen.git"
+        "url": "git+https://github.com/nhayhoc/swagger-autogen.git"
     },
     "devDependencies": {
         "eslint": "^7.26.0",
