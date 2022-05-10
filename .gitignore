@@ -104,6 +104,7 @@ dist
 .tern-port
 .DS_Store
 package-lock.json
+yarn.lock
 test/*.json
 swagger_output.json
 swagger.js
